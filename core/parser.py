@@ -17,7 +17,11 @@ class ParsedDocument:
 class DocumentParser:
     """Reads markdown files from a directory."""
 
-    HTML_TAG = re.compile(r"<[^>]+>")
+    HTML_TAG = re.compile(
+    r"</?(?:div|span|p|br|hr|a|img|table|tr|td|th|ul|ol|li|"
+    r"h[1-6]|b|i|u|em|strong|code|pre|blockquote)\b[^>]*>",
+    re.IGNORECASE,
+   )
 
     def parse_directory(self, directory: str) -> list[ParsedDocument]:
         """Read every .md file in a directory. Skips files that can't be read."""
