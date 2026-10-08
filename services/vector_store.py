@@ -1,10 +1,12 @@
 """Store and search chunk embeddings in ChromaDB."""
 
 import logging
+from typing import Any, cast
 
 import chromadb
 
 from core.chunker import Chunk
+from core.config import COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,7 @@ class VectorStore:
 
     def __init__(
         self,
-        collection_name: str = "internal_docs",
+        collection_name: str = COLLECTION_NAME,
         host: str = "localhost",
         port: int = 8000,
     ) -> None:
@@ -29,7 +31,7 @@ class VectorStore:
 
         self.collection.upsert(
             ids=[f"{chunk.path}::{chunk.chunk_index}" for chunk in chunks],
-            embeddings=vectors,
+            embeddings=cast(Any, vectors),
             documents=[chunk.text for chunk in chunks],
             metadatas=[
                 {
@@ -41,9 +43,16 @@ class VectorStore:
             ],
         )
 
-    def query(self, vector: list[float], top_k: int = 3) -> list[dict[str, object]]:
+    def query(self, vector: list[float], top_k: int = 3) -> list[dict[str, Any]]:
         """Find the most similar stored chunks to a query vector."""
-        result = self.collection.query(query_embeddings=[vector], n_results=top_k)
+        result = self.collection.query(query_embeddings=cast(Any, [vector]), n_results=top_k)
+
+        documents = result["documents"]
+        metadatas = result["metadatas"]
+        distances = result["distances"]
+
+        if documents is None or metadatas is None or distances is None:
+            return []
 
         return [
             {
@@ -52,9 +61,9 @@ class VectorStore:
                 "distance": distance,
             }
             for document, metadata, distance in zip(
-                result["documents"][0],
-                result["metadatas"][0],
-                result["distances"][0],
+                documents[0],
+                metadatas[0],
+                distances[0],
                 strict=True,
             )
         ]

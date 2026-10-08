@@ -5,9 +5,8 @@ from dataclasses import dataclass
 
 from transformers import AutoTokenizer
 
+from core.config import EMBEDDING_MODEL
 from core.parser import ParsedDocument
-
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 @dataclass
@@ -28,7 +27,7 @@ class TextChunker:
     def __init__(self, chunk_size: int = 500, overlap: int = 60) -> None:
         self.chunk_size = chunk_size
         self.overlap = overlap
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        self.tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL)
 
     def count_tokens(self, text: str) -> int:
         """How many tokens this text becomes."""
