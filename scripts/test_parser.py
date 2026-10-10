@@ -1,9 +1,12 @@
 """Quick check that the parser reads raw_docs correctly."""
 
+import logging
+
 from core.parser import DocumentParser
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     parser = DocumentParser()
     documents = parser.parse_directory("raw_docs")
 
