@@ -16,7 +16,7 @@ def main() -> None:
         print(f"--- {document.filename} ---")
         print(f"path: {document.path}")
         print(f"length: {len(document.text)} characters")
-        print(document.text[:600])
+        print(document.text)
         print()
 
 
