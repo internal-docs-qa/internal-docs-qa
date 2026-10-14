@@ -7,7 +7,11 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "transformers (>=5.18.0,<6.0.0)"
+    "transformers (>=5.18.0,<6.0.0)",
+    "sentence-transformers (>=6.1.0,<7.0.0)",
+    "chromadb (>=1.5.9,<2.0.0)",
+    "fastapi (>=0.143.0,<0.144.0)",
+    "uvicorn (>=0.54.0,<0.55.0)"
 ]
 
 
@@ -33,4 +37,7 @@ python_version = "3.13"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true
+
+[tool.poetry]
+package-mode = false
 
