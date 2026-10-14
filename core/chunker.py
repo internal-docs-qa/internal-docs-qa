@@ -25,8 +25,8 @@ class TextChunker:
     SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
     def __init__(self, chunk_size: int = 500, overlap: int = 60) -> None:
-        self.chunk_size = chunk_size
-        self.overlap = overlap
+        self.chunk_size: int = chunk_size
+        self.overlap: int = overlap
         self.tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL)
 
     def count_tokens(self, text: str) -> int:
