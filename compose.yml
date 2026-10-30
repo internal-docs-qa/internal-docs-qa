@@ -8,4 +8,4 @@ services:
       - chroma_data:/chroma/chroma
 
 volumes:
-  chroma_data:
+  - chroma_data:/data
