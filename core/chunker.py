@@ -85,7 +85,12 @@ class TextChunker:
         return pieces
 
     def _overlap_tail(self, paragraphs: list[str]) -> list[str]:
-        """Take paragraphs from the end until we have roughly `overlap` tokens."""
+        """Carry the end of a chunk into the next one.
+
+        Prefers whole paragraphs. If the last paragraph alone is bigger than
+        the overlap budget, falls back to whole sentences from it, so the
+        overlap is never cut mid-sentence.
+        """
         tail: list[str] = []
 
         for paragraph in reversed(paragraphs):
@@ -93,7 +98,21 @@ class TextChunker:
                 break
             tail.insert(0, paragraph)
 
-        return tail
+        if tail:
+            return tail
+
+        return self._sentence_tail(paragraphs[-1])
+
+    def _sentence_tail(self, paragraph: str) -> list[str]:
+        """Take trailing whole sentences from a paragraph, up to the budget."""
+        tail: list[str] = []
+
+        for sentence in reversed(self.SENTENCE_END.split(paragraph)):
+            if self.count_tokens(" ".join([sentence, *tail])) > self.overlap:
+                break
+            tail.insert(0, sentence)
+
+        return [" ".join(tail)] if tail else []
 
     def _make_chunk(self, paragraphs: list[str], document: ParsedDocument, index: int) -> Chunk:
         """Build a Chunk from collected paragraphs, inheriting document metadata."""
