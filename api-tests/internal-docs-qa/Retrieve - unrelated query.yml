@@ -1,0 +1,28 @@
+info:
+  name: Retrieve - unrelated query
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/retrieve"
+  body:
+    type: json
+    data: '{"query": "recipe for cake", "top_k": 3}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.results[0].distance
+      operator: gt
+      value: "1.0"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

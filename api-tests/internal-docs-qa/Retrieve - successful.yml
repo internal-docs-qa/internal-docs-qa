@@ -1,0 +1,31 @@
+info:
+  name: Retrieve - successful
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/retrieve"
+  body:
+    type: json
+    data: '{"query": "how do I log in", "top_k": 3}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.results.length
+      operator: eq
+      value: "3"
+    - expression: res.body.results[0].filename
+      operator: eq
+      value: auth-api.md
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
