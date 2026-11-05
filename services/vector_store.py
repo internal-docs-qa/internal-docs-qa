@@ -42,9 +42,13 @@ class VectorStore:
                 for chunk in chunks
             ],
         )
+        
 
     def query(self, vector: list[float], top_k: int = 3) -> list[dict[str, Any]]:
         """Find the most similar stored chunks to a query vector."""
+        if self.collection.count() == 0:
+            logger.warning("Collection is empty, nothing to search")
+            return []
         result = self.collection.query(query_embeddings=cast(Any, [vector]), n_results=top_k)
 
         documents = result["documents"]
