@@ -25,3 +25,10 @@ class RetrieveResponse(BaseModel):
 
     query: str
     results: list[RetrievedChunk]
+
+class ErrorResponse(BaseModel):
+    """A consistent error shape across every endpoint."""
+
+    error: str
+    message: str
+    field: str | None = None
