@@ -22,7 +22,16 @@ store: VectorStore | None = None
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Load the model and connect to Chroma once, when the server starts."""
     logging.basicConfig(level=logging.INFO)
-    for noisy in ("httpx", "httpcore", "sentence_transformers", "transformers", "huggingface_hub"):
+    for noisy in (
+        "httpx",
+        "httpx2",
+        "httpcore",
+        "google_genai",
+        "sentence_transformers",
+        "transformers",
+        "huggingface_hub",
+    ):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
     global embedder, store
