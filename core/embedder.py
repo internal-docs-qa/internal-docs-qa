@@ -9,7 +9,6 @@ from core.config import EMBEDDING_MODEL
 logger = logging.getLogger(__name__)
 
 
-
 class Embedder:
     """Converts text into embedding vectors."""
 

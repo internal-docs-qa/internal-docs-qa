@@ -25,9 +25,9 @@ def main() -> None:
             print(f"\n[{chunk.chunk_index}] {tokens} tokens | {chunk.filename} | {chunk.path}")
             print(chunk.text[:150].replace("\n", " "))
 
-        for i in range(len(chunks)-1):
-            tail=chunks[i].text[-100]
-            print(f"overlap{i}->{i+1}: {'yes' if tail in chunks[i+1].text else 'no'}")
+        for i in range(len(chunks) - 1):
+            tail = chunks[i].text[-100]
+            print(f"overlap{i}->{i + 1}: {'yes' if tail in chunks[i + 1].text else 'no'}")
 
 
 if __name__ == "__main__":

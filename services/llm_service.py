@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAME = "gemini-3.5-flash-lite"
 TIMEOUT_SECONDS = 30
-FAILURE_MESSAGE = (
-    "The answer service is temporarily unavailable. Please try again shortly."
-)
+FAILURE_MESSAGE = "The answer service is temporarily unavailable. Please try again shortly."
 
 
 class LLMService:

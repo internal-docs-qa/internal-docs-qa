@@ -1,10 +1,12 @@
 """Read markdown files from a directory and extract text with metadata."""
+
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ParsedDocument:

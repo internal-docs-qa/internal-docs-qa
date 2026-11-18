@@ -24,8 +24,10 @@ def main() -> None:
 
     for rank, result in enumerate(results, start=1):
         metadata = result["metadata"]
-        print(f"--- {rank}. {metadata['filename']} #{metadata['chunk_index']} "
-              f"(distance {result['distance']:.4f}) ---")
+        print(
+            f"--- {rank}. {metadata['filename']} #{metadata['chunk_index']} "
+            f"(distance {result['distance']:.4f}) ---"
+        )
         print(f"{str(result['text'])[:300]}\n")
 
 
