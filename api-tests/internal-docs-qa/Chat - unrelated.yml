@@ -1,0 +1,28 @@
+info:
+  name: Chat - unrelated
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/chat"
+  body:
+    type: json
+    data: '{"question": "what is our holiday policy?"}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: "res.status  "
+      operator: eq
+      value: "200"
+    - expression: "res.body.citations.length "
+      operator: eq
+      value: "0"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

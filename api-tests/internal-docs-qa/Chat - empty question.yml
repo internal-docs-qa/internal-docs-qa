@@ -1,0 +1,31 @@
+info:
+  name: Chat - empty question
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/chat"
+  body:
+    type: json
+    data: '{"question": ""}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: "res.status  "
+      operator: eq
+      value: "422"
+    - expression: "res.body.error  "
+      operator: eq
+      value: validation_error
+    - expression: "res.body.field "
+      operator: eq
+      value: question
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
