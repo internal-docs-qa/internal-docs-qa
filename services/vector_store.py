@@ -42,7 +42,6 @@ class VectorStore:
                 for chunk in chunks
             ],
         )
-        
 
     def query(self, vector: list[float], top_k: int = 3) -> list[dict[str, Any]]:
         """Find the most similar stored chunks to a query vector."""
