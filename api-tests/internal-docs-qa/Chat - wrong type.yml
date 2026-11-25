@@ -1,0 +1,28 @@
+info:
+  name: Chat - wrong type
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/chat"
+  body:
+    type: json
+    data: '{"question": 123}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "422"
+    - expression: res.body.error
+      operator: eq
+      value: validation_error
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

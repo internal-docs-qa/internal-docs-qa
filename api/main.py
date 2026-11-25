@@ -4,9 +4,10 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.models import (
     ChatRequest,
@@ -19,7 +20,7 @@ from api.models import (
 )
 from core.embedder import Embedder
 from core.prompt_templates import REFUSAL_MESSAGE, format_context
-from services.llm_service import LLMService
+from services.llm_service import FAILURE_MESSAGE, LLMService
 from services.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,8 @@ app = FastAPI(title="Internal Docs QA", lifespan=lifespan)
 async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Return our own error shape instead of FastAPI's default."""
     first = exc.errors()[0]
-    field = ".".join(str(part) for part in first["loc"] if part != "body")
+    parts = [str(part) for part in first["loc"] if part != "body"]
+    field = ".".join(parts) if parts else "body"
 
     logger.warning("Validation failed on %s: %s", field, first["msg"])
 
@@ -80,6 +82,20 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     )
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    """Return our error shape for FastAPI's own errors (404, 405, ...)."""
+    logger.warning("HTTP %d on %s %s", exc.status_code, request.method, request.url.path)
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorResponse(
+            error="http_error",
+            message=str(exc.detail),
+        ).model_dump(exclude_none=True),
+    )
+
+
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch anything unexpected without leaking internals."""
@@ -90,7 +106,7 @@ async def unhandled_error_handler(request: Request, exc: Exception) -> JSONRespo
         content=ErrorResponse(
             error="internal_error",
             message="Something went wrong processing this request.",
-        ).model_dump(),
+        ).model_dump(exclude_none=True),
     )
 
 
@@ -104,6 +120,8 @@ def health() -> dict[str, str]:
     "/api/v1/retrieve",
     response_model=RetrieveResponse,
     responses={
+        404: {"model": ErrorResponse, "description": "Not found"},
+        405: {"model": ErrorResponse, "description": "Method not allowed"},
         422: {"model": ErrorResponse, "description": "Invalid request"},
         500: {"model": ErrorResponse, "description": "Unexpected error"},
     },
@@ -134,7 +152,10 @@ def retrieve(request: RetrieveRequest) -> RetrieveResponse:
     "/api/v1/chat",
     response_model=ChatResponse,
     responses={
+        404: {"model": ErrorResponse, "description": "Not found"},
+        405: {"model": ErrorResponse, "description": "Method not allowed"},
         422: {"model": ErrorResponse, "description": "Invalid request"},
+        503: {"model": ErrorResponse, "description": "LLM provider unavailable"},
         500: {"model": ErrorResponse, "description": "Unexpected error"},
     },
 )
@@ -147,6 +168,10 @@ def chat(request: ChatRequest) -> ChatResponse:
     matches = store.query(vector, top_k=request.top_k)
     context = format_context(matches)
     answer = llm.generate_response(context, request.question)
+
+    if answer == FAILURE_MESSAGE:
+        logger.error("LLM unavailable for %r", request.question)
+        raise HTTPException(status_code=503, detail=FAILURE_MESSAGE)
 
     if answer.strip() == REFUSAL_MESSAGE:
         logger.info("Refused: no grounded answer for %r", request.question)
