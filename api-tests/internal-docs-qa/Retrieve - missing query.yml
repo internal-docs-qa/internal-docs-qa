@@ -1,0 +1,28 @@
+info:
+  name: Retrieve - missing query
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/retrieve"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: "res.status "
+      operator: eq
+      value: "422"
+    - expression: res.body.field
+      operator: eq
+      value: query
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

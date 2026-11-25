@@ -1,0 +1,28 @@
+info:
+  name: Chat - top_k zero
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/chat"
+  body:
+    type: json
+    data: '{"question": "how long do auth tokens last?", "top_k": 0}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: "res.status  "
+      operator: eq
+      value: "422"
+    - expression: "res.body.field "
+      operator: eq
+      value: top_k
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

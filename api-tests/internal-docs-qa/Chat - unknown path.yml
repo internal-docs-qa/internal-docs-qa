@@ -1,0 +1,28 @@
+info:
+  name: Chat - unknown path
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{base_url}}/api/v1/chatt"
+  body:
+    type: json
+    data: '{"question": "how long do auth tokens last?"}'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: "res.status "
+      operator: eq
+      value: "404"
+    - expression: res.body.error
+      operator: eq
+      value: isDefines
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
