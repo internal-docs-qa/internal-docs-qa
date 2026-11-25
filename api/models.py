@@ -26,9 +26,33 @@ class RetrieveResponse(BaseModel):
     query: str
     results: list[RetrievedChunk]
 
+
 class ErrorResponse(BaseModel):
     """A consistent error shape across every endpoint."""
 
     error: str
     message: str
     field: str | None = None
+
+
+class ChatRequest(BaseModel):
+    """A question for the full RAG pipeline."""
+
+    question: str = Field(min_length=1, description="The natural language question")
+    top_k: int = Field(default=3, ge=1, le=10, description="How many chunks to retrieve")
+
+
+class Citation(BaseModel):
+    """Where a piece of the answer came from."""
+
+    filename: str
+    path: str
+    chunk_index: int
+
+
+class ChatResponse(BaseModel):
+    """An answer with its sources."""
+
+    question: str
+    answer: str
+    citations: list[Citation]

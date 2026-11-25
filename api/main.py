@@ -8,14 +8,25 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from api.models import ErrorResponse, RetrievedChunk, RetrieveRequest, RetrieveResponse
+from api.models import (
+    ChatRequest,
+    ChatResponse,
+    Citation,
+    ErrorResponse,
+    RetrievedChunk,
+    RetrieveRequest,
+    RetrieveResponse,
+)
 from core.embedder import Embedder
+from core.prompt_templates import REFUSAL_MESSAGE, format_context
+from services.llm_service import LLMService
 from services.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
 embedder: Embedder | None = None
 store: VectorStore | None = None
+llm: LLMService | None = None
 
 
 @asynccontextmanager
@@ -32,28 +43,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         "huggingface_hub",
     ):
         logging.getLogger(noisy).setLevel(logging.WARNING)
-        logging.getLogger(noisy).setLevel(logging.WARNING)
 
-    global embedder, store
+    global embedder, store, llm
 
     logger.info("Loading embedding model")
     embedder = Embedder()
     store = VectorStore()
+    llm = LLMService()
     logger.info("Ready — collection holds %d chunks", store.count())
 
     yield
 
     embedder = None
     store = None
+    llm = None
 
 
 app = FastAPI(title="Internal Docs QA", lifespan=lifespan)
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_error_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Return our own error shape instead of FastAPI's default."""
     first = exc.errors()[0]
     field = ".".join(str(part) for part in first["loc"] if part != "body")
@@ -118,3 +128,37 @@ def retrieve(request: RetrieveRequest) -> RetrieveResponse:
     ]
 
     return RetrieveResponse(query=request.query, results=results)
+
+
+@app.post(
+    "/api/v1/chat",
+    response_model=ChatResponse,
+    responses={
+        422: {"model": ErrorResponse, "description": "Invalid request"},
+        500: {"model": ErrorResponse, "description": "Unexpected error"},
+    },
+)
+def chat(request: ChatRequest) -> ChatResponse:
+    """Answer a question from the document collection, with sources."""
+    if embedder is None or store is None or llm is None:
+        raise RuntimeError("Service not initialised")
+
+    vector = embedder.embed([request.question])[0]
+    matches = store.query(vector, top_k=request.top_k)
+    context = format_context(matches)
+    answer = llm.generate_response(context, request.question)
+
+    if answer.strip() == REFUSAL_MESSAGE:
+        logger.info("Refused: no grounded answer for %r", request.question)
+        return ChatResponse(question=request.question, answer=answer, citations=[])
+
+    citations = [
+        Citation(
+            filename=match["metadata"]["filename"],
+            path=match["metadata"]["path"],
+            chunk_index=match["metadata"]["chunk_index"],
+        )
+        for match in matches
+    ]
+
+    return ChatResponse(question=request.question, answer=answer, citations=citations)
